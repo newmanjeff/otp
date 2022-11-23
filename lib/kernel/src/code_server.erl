@@ -1177,16 +1177,21 @@ get_object_code(#state{path=Path}, Mod) when is_atom(Mod) ->
 
 mod_to_bin([Dir|Tail], Mod, ModFile) ->
     File = filename:append(Dir, ModFile),
-    case erl_prim_loader:get_file(File) of
+    case erl_prim_loader:read_file_info(File) of
 	error -> 
 	    mod_to_bin(Tail, Mod, ModFile);
-	{ok,Bin,_} ->
-	    case filename:pathtype(File) of
-		absolute ->
-		    {Mod,Bin,File};
-		_ ->
-		    {Mod,Bin,absname(File)}
-	    end
+        _ ->
+            case erl_prim_loader:get_file(File) of
+                error -> 
+                    mod_to_bin(Tail, Mod, ModFile);
+                {ok,Bin,_} ->
+                    case filename:pathtype(File) of
+                        absolute ->
+                            {Mod,Bin,File};
+                        _ ->
+                            {Mod,Bin,absname(File)}
+                    end
+            end
     end;
 mod_to_bin([], Mod, ModFile) ->
     %% At last, try also erl_prim_loader's own method
